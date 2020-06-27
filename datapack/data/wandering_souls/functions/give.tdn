@@ -1,0 +1,9 @@
+@on compile
+
+define function wandering_soul_body {
+    as @s at @s give @s $itm_wandering_soul_body
+}
+
+define function wandering_soul_arm {
+    as @s at @s give @s $itm_wandering_soul_arm
+}

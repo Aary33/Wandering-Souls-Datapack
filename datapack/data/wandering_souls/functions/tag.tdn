@@ -1,0 +1,31 @@
+@on compile
+@priority 0
+
+
+    
+define function second {
+    global var f_second = resource</>
+    
+    
+    schedule function / 1s replace
+}
+
+define function tick {
+    @tag tick
+}
+
+define function init {
+    @tag load
+    team add wSouls.team {"text":"Wandering Souls","color":"gray"}
+    team modify wSouls.team color gray
+    
+    #schedule function $f_second 1s replace
+    tellraw @a ["",{"text":"> ","color":"gray"},{"text":"[Wandering Souls]","color":"dark_gray"},{"text":"[1.0.0]","color":"dark_gray"},{"text":" module loaded.","color":"gray"}]    
+    summon minecraft:giant ~ ~ ~ {ActiveEffects:[{Id:14b, Amplifier:0b, Duration: 999999, Ambient:1b, ShowParticles: 0b}],ArmorItems:[{},{},{},{id:"minecraft:carrot_on_a_stick",Count:1b,tag:{CustomModelData:7370690}}],HandItems:[{id:"minecraft:carrot_on_a_stick",Count:1b,tag:{CustomModelData:7370691}},{id:"minecraft:carrot_on_a_stick",Count:1b,tag:{CustomModelData:7370691}}]}
+    
+}
+
+
+define function uninstall {
+    team remove wSouls.team
+}

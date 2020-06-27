@@ -1,0 +1,12 @@
+@on compile
+
+eval File.out.writeData(
+    "data/wandering_souls/predicates/wandering_soul/idle/whisper_chance.json" ,
+    JSON.stringify(
+        {
+            "condition": "random_chance",
+            "chance": 0.5
+        },
+        true
+    )
+)

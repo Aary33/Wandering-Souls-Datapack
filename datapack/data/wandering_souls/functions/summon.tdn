@@ -1,0 +1,5 @@
+@on compile
+
+define function wandering_soul {
+    as @s summon $ent_wandering_soul
+}

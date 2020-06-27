@@ -1,0 +1,10 @@
+{
+	"textures": {
+		"layer0": "item/carrot_on_a_stick"
+	},
+	
+	"overrides": [
+		{"predicate": {"custom_model_data":7370690}, "model": "wandering_souls:item/wandering_soul/body"},
+		{"predicate": {"custom_model_data":7370691}, "model": "wandering_souls:item/wandering_soul/arm"}
+	]
+}

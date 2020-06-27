@@ -1,0 +1,236 @@
+@on compile
+@priority 1
+
+#Config
+#
+#
+var int_idle_timer = 80
+
+#Charge: Time in ticks to charge
+
+#Cooldown: Time in ticks before using again
+
+#Dependencies
+#
+#
+var pre_spawn_condition = resource <wandering_souls:wandering_soul/spawn_condition>
+var pre_voices_chance = resource <wandering_souls:wandering_soul/idle/voices_chance>
+var pre_whisper_chance = resource <wandering_souls:wandering_soul/idle/whisper_chance>
+
+var snd_voices = resource <minecraft:entity.wandering_soul.voices>
+var snd_whisper = resource <minecraft:entity.wandering_soul.whisper>
+var snd_mood = resource <minecraft:entity.wandering_soul.mood>
+
+#Initialize objectives
+#
+#
+
+define objective wSouls.idle_tick dummy {"text":"Wandering Soul Idle Timer"}
+
+#Items
+#
+#
+
+define item itm_wandering_soul_body minecraft:carrot_on_a_stick#7370690 {
+    default name [
+        "",
+        { "text" : "Wandering Soul Body", "color" : "white", "italic":false}
+    ]
+    
+}
+define item itm_wandering_soul_arm minecraft:carrot_on_a_stick#7370691 {
+    default name [
+        "",
+        { "text" : "Wandering Soul Arm", "color" : "white", "italic":false}
+    ]
+    
+}
+
+var nbt_wandering_soul_body_tag = itm_wandering_soul_body.getItemTag()
+var nbt_wandering_soul_arm_tag = itm_wandering_soul_arm.getItemTag()
+
+#Entities
+#
+#
+define entity default minecraft:zombie_pigman {
+    ticking function tick {
+        
+        if entity @s[tag=!wSouls.processed] if predicate $pre_spawn_condition if block ~ ~-1 ~ minecraft:soul_sand unless entity @p[distance=0..15]
+            tag @s add wSouls.replace
+        
+        if entity @s[tag=wSouls.replace] at @s
+            run function $f_replace_with_soul
+        
+        if entity @s[tag=!wSouls.processed] at @s
+            run tag @s add wSouls.processed
+        
+    }
+}
+
+define entity ent_wandering_soul minecraft:vex {
+    default name [
+        "",
+        { "text" : "Wandering Soul", "color" : "gray","obfuscated":true}
+    ]
+    
+    default health 20
+    
+    default nbt {
+        Tags:[
+            "wSouls.soul"
+        ],
+        PersistenceRequired:0b,
+        Attributes:[
+            {Name:"generic.followRange", Base:1.0}
+        ],
+        Silent: 1b,
+        Glowing: 0b,
+        CustomNameVisible: 1b,
+        DeathLootTable: "minecraft:empty",
+        Team:"wSouls.team",
+        HandDropChances:[0.0f,0.0f],
+        ArmorDropChances:[0.0f,0.0f,0.0f,0.0f],
+        ActiveEffects:[
+            {Id:14b, Amplifier:0b, Duration: 999999, Ambient:1b, ShowParticles: 0b },
+            {Id:11b, Amplifier:3b, Duration: 999999, Ambient:1b, ShowParticles: 0b }
+        ],
+        ArmorItems:[
+            {},
+            {},
+            {},
+            {id:"minecraft:carrot_on_a_stick",Count:1b,tag:$nbt_wandering_soul_body_tag}
+        ],
+        HandItems:[
+            {id:"minecraft:carrot_on_a_stick",Count:1b,tag:$nbt_wandering_soul_arm_tag},
+            {id:"minecraft:carrot_on_a_stick",Count:1b,tag:$nbt_wandering_soul_arm_tag}
+        ]
+        
+    }
+    
+    function player_close {
+        if entity @p[gamemode=survival]
+        as @s at @s facing @p[gamemode=survival]
+            teleport @s ~ ~ ~ ~ ~
+        if entity @p[gamemode=adventure]
+        as @s at @s facing @p[gamemode=adventure]
+            teleport @s ~ ~ ~ ~ ~
+    }
+    
+    function disappear {
+        positioned ~ ~1 ~
+            particle minecraft:campfire_cosy_smoke ~ ~ ~ 0.01 0.5 0.01 0.01 5 force
+        
+        positioned ~ ~1 ~
+            particle minecraft:smoke ~ ~ ~ 0.1 0.1 0.5 0.1 10 normal
+        
+        positioned ~ ~1 ~
+            playsound $snd_mood hostile @a ~ ~ ~ 3 1.2 1
+        
+        teleport @s ~ -10 ~
+        kill @s
+    }
+    
+    function idle {
+        if entity @p[distance=0..20]
+        if predicate $pre_whisper_chance
+        positioned ~ ~0.5 ~
+            playsound $snd_whisper hostile @a[distance=0..20] ~ ~ ~ 20 0.9 0
+        
+        
+        if entity @p[distance=20..120]
+        if predicate $pre_voices_chance
+        positioned ~ ~0.5 ~
+            playsound $snd_voices hostile @a[distance=20..120] ~ ~ ~ 20 0.8 1
+    }
+    
+    
+    ticking function tick {
+        #Animation
+        positioned ~ ~0.5 ~
+            particle minecraft:mycelium ~ ~ ~ 0.2 0.5 0.2 1 1 force
+        
+        #Check if hurt
+        if entity @s[nbt={HurtTime:10s}]
+            function ${this.disappear}
+        
+        
+        #Check for idle
+        set @s->wSouls.idle_tick -= 1
+        if score @s wSouls.idle_tick matches ..0
+            run function ${this.idle}
+        if score @s wSouls.idle_tick matches ..0
+            run set @s->wSouls.idle_tick = $int_idle_timer
+        
+        
+        if entity @p[distance=0..15,gamemode=survival]
+            function ${this.player_close}
+        if entity @p[distance=0..15,gamemode=adventure]
+            function ${this.player_close}
+        
+        
+        if entity @p[distance=0..1.5,gamemode=survival]
+            function ${this.disappear}
+        if entity @p[distance=0..1.5,gamemode=adventure]
+            function ${this.disappear}
+        
+        positioned ~ ~-15 ~
+        if entity @p[dx=0,dy=30,dz=0,gamemode=survival]
+        at @s
+            function ${this.disappear}
+        positioned ~ ~-15 ~
+        if entity @p[dx=0,dy=30,dz=0,gamemode=adventure]
+        at @s
+            function ${this.disappear}
+        
+        
+        if entity @e[type=minecraft:spectral_arrow,nbt={inGround:0b},distance=0..2]
+            function ${this.disappear}
+        if entity @e[type=minecraft:arrow,nbt={inGround:0b},distance=0..2]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:potion,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:ender_pearl,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:snowball,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:egg,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:minecart,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:dragon_fireball,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:fireball,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:small_fireball,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:firework_rocket,distance=0..5]
+            function ${this.disappear}
+        
+        if entity @e[type=minecraft:tnt,distance=0..5]
+            function ${this.disappear}
+    }
+}
+
+#Functions
+#
+#
+define function replace_with_soul {
+    global var f_replace_with_soul = resource </>
+    
+    summon $ent_wandering_soul ~10 ~ ~
+    summon $ent_wandering_soul ~ ~-3 ~
+    summon $ent_wandering_soul ~ ~ ~8
+    effect give @s minecraft:invisibility 999999 0 true
+    teleport @s ~ -100 ~
+    kill @s
+    
+}

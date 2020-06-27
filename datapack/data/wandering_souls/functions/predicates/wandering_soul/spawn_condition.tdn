@@ -1,0 +1,16 @@
+@on compile
+
+eval File.out.writeData(
+    "data/wandering_souls/predicates/wandering_soul/spawn_condition.json" ,
+    JSON.stringify(
+        {
+            "condition": "minecraft:location_check",
+            "predicate": {
+                "biome": "minecraft:nether"
+            },
+            "condition": "random_chance",
+            "chance": 0.10
+        },
+        true
+    )
+)
